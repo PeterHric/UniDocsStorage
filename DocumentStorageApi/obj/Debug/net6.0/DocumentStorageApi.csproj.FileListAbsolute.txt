@@ -1,0 +1,5 @@
+/home/peter/Projects/Coderama/DocumentStorageApi/obj/Debug/net6.0/DocumentStorageApi.csproj.AssemblyReference.cache
+/home/peter/Projects/Coderama/DocumentStorageApi/obj/Debug/net6.0/DocumentStorageApi.GeneratedMSBuildEditorConfig.editorconfig
+/home/peter/Projects/Coderama/DocumentStorageApi/obj/Debug/net6.0/DocumentStorageApi.AssemblyInfoInputs.cache
+/home/peter/Projects/Coderama/DocumentStorageApi/obj/Debug/net6.0/DocumentStorageApi.AssemblyInfo.cs
+/home/peter/Projects/Coderama/DocumentStorageApi/obj/Debug/net6.0/DocumentStorageApi.csproj.CoreCompileInputs.cache
