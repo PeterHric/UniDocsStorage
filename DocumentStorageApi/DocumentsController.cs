@@ -1,148 +1,200 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Reflection.Metadata;
-using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
-using Newtonsoft.Json;
+
 using Newtonsoft.Json.Linq;
 
-//namespace DocumentStorageService.Controllers;
+using DocumentStorageApi.Routing;
+using DocumentStorage;
+using Newtonsoft.Json;
+using System.Xml.Serialization;
+using Serializers;
+
 namespace DocumentStorageApi.Controllers;
 
-public class Document
-{
-    [JsonProperty("id")]
-    []
-    public string Id { get; set; }
-
-    [JsonProperty("tags")]
-    public IList<string> Tags { get; set; }
-
-    [JsonProperty("data")]
-    public JObject Data { get; set; }
-}
-
-public interface IDocumentStorage
-{
-    Task StoreDocumentAsync(Document document);
-
-    Task<Document> GetDocumentAsync(string id);
-
-    Task UpdateDocumentAsync(Document document);
-}
-
-public class InMemoryDocumentStorage : IDocumentStorage
-{
-    private readonly IDictionary<string, Document> _documents = new Dictionary<string, Document>();
-
-    public Task<Document> GetDocumentAsync(string id)
-    {
-        return Task.FromResult(_documents.TryGetValue(id, out var document) ? document : null);
-    }
-
-    public Task StoreDocumentAsync(Document document)
-    {
-        _documents[document.Id] = document;
-        return Task.CompletedTask;
-    }
-
-    public Task UpdateDocumentAsync(Document document)
-    {
-        _documents[document.Id] = document;
-        return Task.CompletedTask;
-    }
-}
 
 [ApiController]
-[Route("[controller]")]
+[Route(ApiRoutes.DocumentsControllerURL)]
 public class DocumentsController : ControllerBase
 {
-    private readonly ILogger<DocumentsController> _logger;
-    private readonly IDocumentStorageService _documentStorageService;
-
-    public DocumentsController(ILogger<DocumentsController> logger, IDocumentStorageService documentStorageService)
+    public DocumentsController(ILogger<DocumentsController> logger, IDocumentStorage documentStorage)
     {
         _logger = logger;
-        _documentStorageService = documentStorageService;
+        _documentStorage = documentStorage;
     }
 
     [HttpPost]
-    public IActionResult Post([FromBody] JObject document)
+    public async Task<IActionResult> PostAsync([FromBody] DocumentEntity document)
     {
-        if (document == null || !document.ContainsKey("id") || !document.ContainsKey("tags") || !document.ContainsKey("data"))
+        if (document == null)
         {
-            return BadRequest("Invalid document format");
+            return BadRequest("Received null document");
+        }
+        else if (document.Data!.Count == 0) // Data field is [Required]
+        {
+            return BadRequest("Document contains no 'Data'");
         }
 
         try
         {
-            _documentStorageService.StoreDocument(document);
+            await _documentStorage.StoreAsync(document);
             return Ok();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error storing document");
-            return StatusCode(500, "Error storing document");
+            var errMessage = $"Failed to store the document: {ex.Message}";
+            _logger.LogError(errMessage);
+            return StatusCode(500, errMessage);
         }
     }
 
     [HttpPut("{id}")]
-    public IActionResult Put(string id, [FromBody] JObject document)
+    public async Task<IActionResult> PutAsync(string id, [FromBody] DocumentEntity document)
     {
-        if (document == null || !document.ContainsKey("tags") || !document.ContainsKey("data"))
+        if (document == null)
         {
-            return BadRequest("Invalid document format");
+            return BadRequest("Received null document");
+        }
+        else if (document.Data!.Count == 0) // Data field is [Required]
+        {
+            return BadRequest("Document contains no 'Data'");
         }
 
         try
         {
-            _documentStorageService.UpdateDocument(id, document);
+            await _documentStorage.UpdateAsync(document);
             return Ok();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating document");
-            return StatusCode(500, "Error updating document");
+            var errorMessage = $"Error updating document. Reason:{ex.Message}";
+            _logger.LogError(errorMessage);
+            return StatusCode(500, errorMessage);
         }
     }
 
     [HttpGet("{id}")]
-    public IActionResult Get(string id)
+    public async Task<IActionResult> GetAsync(string id)
     {
         try
         {
-            var document = _documentStorageService.GetDocument(id);
+            var document = await _documentStorage.GetAsync(id);
             if (document == null)
             {
                 return NotFound();
             }
 
             var acceptHeader = Request.Headers[HeaderNames.Accept].FirstOrDefault();
-            var serializer = GetSerializer(acceptHeader);
+            if (acceptHeader == null)
+            {
+                return BadRequest($"Missing, or wrong 'Accept' request header type/format.");
+            }
 
+            var serializer = ASerializer.GetSerializer(acceptHeader);
             if (serializer == null)
             {
                 return BadRequest($"Unsupported media type: {acceptHeader}");
             }
 
-            var stream = new MemoryStream();
-            serializer.Serialize(stream, document);
-            stream.Seek(0, SeekOrigin.Begin);
-            return new FileStreamResult(stream, serializer.ContentType);
+            var bytes = await serializer.SerializeAsync(document);
+            if (serializer.ContentType == "application/x-msgpack")
+            {
+                return File(bytes, serializer.ContentType, $"document_{document.Id}.msgpack");
+            }
+
+            using var stream = new MemoryStream(bytes);
+            //return new FileStreamResult(stream, serializer.ContentType);
+            return Content(serializer.Serialize(document), serializer.ContentType);
+
+            // Can use in response
+            /*
+            using var stream1 = new MemoryStream();
+            serializer.Serialize(document);
+            stream1.Seek(0, SeekOrigin.Begin);
+            return new FileStreamResult(stream1, serializer.ContentType);
+            */
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving document");
-            return StatusCode(500, "Error retrieving document");
+            var errMessage = $"Error retrieving document. Reason: {ex.Message}";
+            _logger.LogError(errMessage);
+            return Problem($"Error retrieving document. Reason: {ex.Message}");
         }
     }
 
-    private ISerializer GetSerializer(string mediaType)
-    {
-    }
+    /*
+        static public DocumentEntity? FromJsonObject(JObject jObjDocument)
+        {
+            // Check that the "id" and "tags" properties exist in the JSON object
+            if (!jObjDocument.TryGetValue("id", StringComparison.OrdinalIgnoreCase, out JToken idToken) ||
+                !jObjDocument.TryGetValue("tags", StringComparison.OrdinalIgnoreCase, out JToken tagsToken))
+            {
+                return null;
+            }
 
+            // Parse the "id" property into a Guid
+            if (!Guid.TryParse(idToken.ToString(), out Guid id))
+            {
+                return null;
+            }
+
+            // Parse the "tags" property into a list of strings
+            if (!tagsToken.HasValues)
+            {
+                return null;
+            }
+
+            List<string> tags = new List<string>();
+            foreach (JToken tagToken in tagsToken)
+            {
+                if (tagToken.Type == JTokenType.String)
+                {
+                    tags.Add(tagToken.ToString());
+                }
+            }
+
+            // Create the DocumentEntity object
+            DocumentEntity document = new DocumentEntity()
+            {
+                Id = id,
+                Tags = tags,
+                Data = jObjDocument.ContainsKey("data") ? (JObject)jObjDocument["data"] : null
+            };
+
+            return document;
+        }
+
+        public DocumentEntity? FromJsonObject(JObject jObjDocument)
+        {
+            //var jsonParsedMsg = JObject.Parse(encodedMessage);
+            //case ScadaMessageType.SERVICE_UNIT_STATISTIC:
+            //parsedObject = jsonParsedMsg.GetValue("Payload").ToObject<ServiceUnitStatistic>();
+            DocumentEntity retVal = null;
+            try
+            {
+                if (!jObjDocument.TryGetValue("Id", StringComparison.OrdinalIgnoreCase, out JToken result))
+                    return null;
+
+                var retVal = new DocumentEntity()
+                {
+                    Id = result.SelectToken("Id").ToObject<Guid>(),
+                    //Tags = result.SelectToken("Tags").ToObject<IList<string>>(),
+                    Tags = result.SelectToken("Tags").ToObject<List<string>>(),
+                    Data = result.SelectToken("Data").ToObject<JObject>()
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to create DocumentEntity from JsonObject. Reason: {ex.Message}");
+            }
+
+            return retVal;
+        }
+    */
+
+    private readonly ILogger<DocumentsController> _logger;
+
+    private readonly IDocumentStorage _documentStorage;
 }

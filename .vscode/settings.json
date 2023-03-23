@@ -20,5 +20,6 @@
                 }
             }
         ]
-    }
+    },
+    "svn.ignoreMissingSvnWarning": true
 }
