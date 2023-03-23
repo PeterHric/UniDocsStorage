@@ -1,15 +1,9 @@
-using System.Reflection.Metadata;
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
 
-using Newtonsoft.Json.Linq;
-
 using DocumentStorageApi.Routing;
 using DocumentStorage;
-using Newtonsoft.Json;
-using System.Xml.Serialization;
 using Serializers;
 
 namespace DocumentStorageApi.Controllers;

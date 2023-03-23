@@ -1,3 +1,5 @@
+using MongoDB.Driver;
+
 namespace DocumentStorage.Mongo;
 
 public class MongoDocumentStorage : IDocumentStorage
@@ -6,29 +8,21 @@ public class MongoDocumentStorage : IDocumentStorage
 
     public MongoDocumentStorage(IMongoClient mongoClient)
     {
-        var database = mongoClient.GetDatabase("mydb");
+        var database = mongoClient.GetDatabase("mymongodb");
         _collection = database.GetCollection<DocumentEntity>("documents");
     }
 
-    public DocumentEntity Create(DocumentEntity document)
-    {
-        _collection.InsertOne(document);
-        return document;
-    }
+    public async Task StoreAsync(DocumentEntity document) =>
+        await _collection.InsertOneAsync(document);
 
-    public DocumentEntity Update(DocumentEntity document)
-    {
-        _collection.ReplaceOne(d => d.Id == document.Id, document);
-        return document;
-    }
 
-    public DocumentEntity GetById(string id)
-    {
-        return _collection.Find(d => d.Id == id).FirstOrDefault();
-    }
+    public async Task UpdateAsync(DocumentEntity document) =>
+        await _collection.ReplaceOneAsync(d => d.Id == document.Id, document);
 
-    public List<DocumentEntity> GetAll()
-    {
-        return _collection.Find(_ => true).ToList();
-    }
+    public async Task<DocumentEntity> GetAsync(string id) =>
+         (await _collection.FindAsync(d => d.Id == id)).FirstOrDefault();
+
+    public async Task<List<DocumentEntity>> GetAllAsync() =>
+        await (await _collection.FindAsync(_ => true)).ToListAsync();
+
 }
