@@ -1,2 +1,8 @@
-/DocumentStorageApi/bin
-/DocumentStorageApi/obj
+DocumentStorageApi/bin
+DocumentStorageApi/obj
+DocumentStorageApi/obj/DocumentStorageApi.csproj.nuget.dgspec.json
+DocumentStorageApi/obj/DocumentStorageApi.csproj.nuget.g.props
+DocumentStorageApi/obj/project.assets.json
+DocumentStorageApi/obj/project.nuget.cache
+DocumentStorageApi/obj/Debug/net6.0/DocumentStorageApi.assets.cache
+DocumentStorageApi/obj/Debug/net6.0/DocumentStorageApi.csproj.AssemblyReference.cache

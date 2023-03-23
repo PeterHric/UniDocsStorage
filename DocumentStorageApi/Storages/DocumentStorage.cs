@@ -20,6 +20,10 @@ public class DocumentEntity
     public JObject Data { get; set; } = new JObject();
 }
 
+/// <summary>
+/// ToDo: With larger API, implement the Repository pattern with UoW, DbContext
+/// with ORM support such as EFCore, or NHibernate 
+/// </summary>
 public interface IDocumentStorage
 {
     Task<DocumentEntity> GetAsync(string id);

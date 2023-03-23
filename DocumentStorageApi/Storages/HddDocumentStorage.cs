@@ -21,24 +21,20 @@ public class HddDocumentStorage : IDocumentStorage
             var json = await File.ReadAllTextAsync(filePath);
             return JsonConvert.DeserializeObject<DocumentEntity>(json);
         }
-        else
-        {
-            return new DocumentEntity() { Id = null };
-        }
+
+        throw new Exception($"Failed to retrieve document with id:{id} from file path: {filePath}");
     }
 
     public async Task StoreAsync(DocumentEntity document)
     {
         var filePath = Path.Combine(_folderPath, document.Id + ".json");
         await File.WriteAllTextAsync(filePath, JsonConvert.SerializeObject(document));
-        return;
     }
 
     public async Task UpdateAsync(DocumentEntity document)
     {
         var filePath = Path.Combine(_folderPath, document.Id + ".json");
         await File.WriteAllTextAsync(filePath, JsonConvert.SerializeObject(document));
-        return;
     }
 
     public List<DocumentEntity> GetAll()

@@ -5,19 +5,14 @@ using Newtonsoft.Json.Linq;
 
 namespace DocumentStorage.MsSql;
 
-//Task<DocumentEntity> GetAsync(string id);
-
-//Task StoreAsync(DocumentEntity document);
-
-//Task UpdateAsync(DocumentEntity document);
-
 public class MssqlDocumentStorage : IDocumentStorage
 {
     private readonly string _connectionString;
 
     public MssqlDocumentStorage(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection");
+        _connectionString = configuration.GetConnectionString("DefaultConnection") ??
+            throw new Exception("Missing connection string in configuration !");
     }
 
     /// <summary>
