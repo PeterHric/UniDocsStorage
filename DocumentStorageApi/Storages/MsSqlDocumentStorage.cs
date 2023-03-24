@@ -11,7 +11,7 @@ public class MssqlDocumentStorage : IDocumentStorage
 
     public MssqlDocumentStorage(IConfiguration configuration)
     {
-        _connectionString = configuration.GetConnectionString("DefaultConnection") ??
+        _connectionString = configuration.GetConnectionString("DefaultMsSqlConnection") ??
             throw new Exception("Missing connection string in configuration !");
     }
 
