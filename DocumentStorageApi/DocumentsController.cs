@@ -5,6 +5,7 @@ using Microsoft.Net.Http.Headers;
 using DocumentStorageApi.Routing;
 using DocumentStorage;
 using Serializers;
+using Newtonsoft.Json.Linq;
 
 namespace DocumentStorageApi.Controllers;
 
@@ -26,10 +27,12 @@ public class DocumentsController : ControllerBase
         {
             return BadRequest("Received null document");
         }
-        else if (document.Data!.Count == 0) // Data field is [Required]
+        // However, field Data is [Required]
+        else if (document.Data == null || !(JObject.FromObject(document.Data) is JObject dataObject) || dataObject.Count == 0)
         {
             return BadRequest("Document contains no 'Data'");
         }
+        // ToDo: Check existence of entity
 
         try
         {
@@ -51,7 +54,8 @@ public class DocumentsController : ControllerBase
         {
             return BadRequest("Received null document");
         }
-        else if (document.Data!.Count == 0) // Data field is [Required]
+        // However, field Data is [Required]
+        else if (document.Data == null || !(JObject.FromObject(document.Data) is JObject dataObject) || dataObject.Count == 0)
         {
             return BadRequest("Document contains no 'Data'");
         }

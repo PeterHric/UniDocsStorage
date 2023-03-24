@@ -21,7 +21,7 @@ public interface ISerializer
 
 public abstract class ASerializer : ISerializer
 {
-    public string ContentType { get; protected set; } = "abstract";
+    virtual public string ContentType { get; protected set; } = "abstract";
 
     public abstract string Serialize(DocumentEntity document);
 
@@ -53,7 +53,7 @@ public abstract class ASerializer : ISerializer
 
 public class XmlDocumentSerializer : ASerializer
 {
-    new public string ContentType { get; protected set; } = "application/xml";
+    override public string ContentType { get; protected set; } = "application/xml";
 
     override public string Serialize(DocumentEntity document)
     {
@@ -82,7 +82,7 @@ public class XmlDocumentSerializer : ASerializer
 
 public class MsgPackSerializer : ASerializer
 {
-    new public string ContentType { get; protected set; } = "application/x-msgpack";
+    override public string ContentType { get; protected set; } = "application/x-msgpack";
 
     override public string Serialize(DocumentEntity document)
     {
@@ -110,7 +110,7 @@ public class MsgPackSerializer : ASerializer
 
 public class JsonSerializer : ASerializer
 {
-    new public string ContentType { get; protected set; } = "application/json";
+    override public string ContentType { get; protected set; } = "application/json";
 
     override public string Serialize(DocumentEntity document)
     {

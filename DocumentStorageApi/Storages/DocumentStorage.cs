@@ -13,11 +13,11 @@ public class DocumentEntity
 
     [Required]
     [JsonProperty("tags")]
-    public IList<string> Tags { get; set; } = new List<string>();
+    public List<string> Tags { get; set; } = new List<string>();
 
     [Required]
     [JsonProperty("data")]
-    public JObject Data { get; set; } = new JObject();
+    public object Data { get; set; } = new object();
 }
 
 /// <summary>
