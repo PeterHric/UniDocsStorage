@@ -1,0 +1,50 @@
+# Please refer https://aka.ms/HTTPSinContainer on how to setup an https developer certificate for your ASP.NET Core service.
+
+version: '3.4'
+
+services:
+  documentstorageapi:
+    image: documentstorageapi
+    restart: always
+    build:
+      context: .
+      dockerfile: DocumentStorageApi/Dockerfile
+    ports:
+      - 5000:5000
+    depends_on:
+      - mysql
+      - mongo
+    networks:
+      - mynetwork
+    volumes:
+      - mydata:/data
+
+  mysql:
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: mydatabase
+      MYSQL_ROOT_PASSWORD: mypassword
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - mynetwork
+
+  mongo:
+    image: mongo
+    restart: always
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - mynetwork
+
+networks:
+  mynetwork:
+
+
+volumes:
+  mydata:
+  mysql-data:
+  mongo-data:

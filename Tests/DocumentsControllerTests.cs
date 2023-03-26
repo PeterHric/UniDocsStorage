@@ -46,7 +46,7 @@ public class DocumentsControllerTests
         DocumentEntity? document = null;
 
         // Act
-        var result = await _controller!.PostAsync(document);
+        var result = await _controller!.PostAsync(document!);
 
         // Assert
         Assert.IsInstanceOf<BadRequestObjectResult>(result);
@@ -96,7 +96,7 @@ public class DocumentsControllerTests
         DocumentEntity? document = null;
 
         // Act
-        var result = await _controller!.PutAsync(id, document);
+        var result = await _controller!.PutAsync(id, document!);
 
         // Assert
         Assert.IsInstanceOf<BadRequestObjectResult>(result);
