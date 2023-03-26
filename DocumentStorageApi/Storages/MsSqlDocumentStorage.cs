@@ -33,7 +33,7 @@ public class MssqlDocumentStorage : IDocumentStorage
             {
                 Id = reader.GetString(reader.GetOrdinal("Id")),
                 Tags = reader.GetString(reader.GetOrdinal("Tags")).Split(',').ToList(),
-                Data = JsonConvert.DeserializeObject<JObject>(reader.GetString(reader.GetOrdinal("Data")))
+                Data = JsonConvert.DeserializeObject<Dictionary<string, string>>(reader.GetString(reader.GetOrdinal("Data")))
             };
         }
 

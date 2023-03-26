@@ -27,7 +27,7 @@ public class DocumentsController : ControllerBase
         {
             return BadRequest("Received null document");
         }
-        // However, field Data is [Required]
+        // However, field Data is attributed as [Required]
         else if (document.Data == null || !(JObject.FromObject(document.Data) is JObject dataObject) || dataObject.Count == 0)
         {
             return BadRequest("Document contains no 'Data'");
@@ -54,7 +54,7 @@ public class DocumentsController : ControllerBase
         {
             return BadRequest("Received null document");
         }
-        // However, field Data is [Required]
+        // However, field Data is attributed as [Required]
         else if (document.Data == null || !(JObject.FromObject(document.Data) is JObject dataObject) || dataObject.Count == 0)
         {
             return BadRequest("Document contains no 'Data'");
@@ -96,23 +96,9 @@ public class DocumentsController : ControllerBase
                 return BadRequest($"Unsupported media type: {acceptHeader}");
             }
 
-            var bytes = await serializer.SerializeAsync(document);
-            if (serializer.ContentType == "application/x-msgpack")
-            {
-                return File(bytes, serializer.ContentType, $"document_{document.Id}.msgpack");
-            }
-
-            using var stream = new MemoryStream(bytes);
-            //return new FileStreamResult(stream, serializer.ContentType);
             return Content(serializer.Serialize(document), serializer.ContentType);
-
-            // Can use in response
-            /*
-            using var stream1 = new MemoryStream();
-            serializer.Serialize(document);
-            stream1.Seek(0, SeekOrigin.Begin);
-            return new FileStreamResult(stream1, serializer.ContentType);
-            */
+            // Or use async variant:
+            //return Content(await serializer.SerializeAsync(document), serializer.ContentType);
         }
         catch (Exception ex)
         {
@@ -121,76 +107,6 @@ public class DocumentsController : ControllerBase
             return Problem($"Error retrieving document. Reason: {ex.Message}");
         }
     }
-
-    /*
-        static public DocumentEntity? FromJsonObject(JObject jObjDocument)
-        {
-            // Check that the "id" and "tags" properties exist in the JSON object
-            if (!jObjDocument.TryGetValue("id", StringComparison.OrdinalIgnoreCase, out JToken idToken) ||
-                !jObjDocument.TryGetValue("tags", StringComparison.OrdinalIgnoreCase, out JToken tagsToken))
-            {
-                return null;
-            }
-
-            // Parse the "id" property into a Guid
-            if (!Guid.TryParse(idToken.ToString(), out Guid id))
-            {
-                return null;
-            }
-
-            // Parse the "tags" property into a list of strings
-            if (!tagsToken.HasValues)
-            {
-                return null;
-            }
-
-            List<string> tags = new List<string>();
-            foreach (JToken tagToken in tagsToken)
-            {
-                if (tagToken.Type == JTokenType.String)
-                {
-                    tags.Add(tagToken.ToString());
-                }
-            }
-
-            // Create the DocumentEntity object
-            DocumentEntity document = new DocumentEntity()
-            {
-                Id = id,
-                Tags = tags,
-                Data = jObjDocument.ContainsKey("data") ? (JObject)jObjDocument["data"] : null
-            };
-
-            return document;
-        }
-
-        public DocumentEntity? FromJsonObject(JObject jObjDocument)
-        {
-            //var jsonParsedMsg = JObject.Parse(encodedMessage);
-            //case ScadaMessageType.SERVICE_UNIT_STATISTIC:
-            //parsedObject = jsonParsedMsg.GetValue("Payload").ToObject<ServiceUnitStatistic>();
-            DocumentEntity retVal = null;
-            try
-            {
-                if (!jObjDocument.TryGetValue("Id", StringComparison.OrdinalIgnoreCase, out JToken result))
-                    return null;
-
-                var retVal = new DocumentEntity()
-                {
-                    Id = result.SelectToken("Id").ToObject<Guid>(),
-                    //Tags = result.SelectToken("Tags").ToObject<IList<string>>(),
-                    Tags = result.SelectToken("Tags").ToObject<List<string>>(),
-                    Data = result.SelectToken("Data").ToObject<JObject>()
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"Failed to create DocumentEntity from JsonObject. Reason: {ex.Message}");
-            }
-
-            return retVal;
-        }
-    */
 
     private readonly ILogger<DocumentsController> _logger;
 

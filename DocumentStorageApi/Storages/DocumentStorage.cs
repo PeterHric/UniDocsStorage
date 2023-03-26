@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-
+using System.Xml;
+using System.Xml.Serialization;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -17,11 +18,14 @@ public class DocumentEntity
 
     [Required]
     [JsonProperty("data")]
-    public object Data { get; set; } = new object();
+    [XmlElement("data")]
+    [XmlElement(typeof(Dictionary<string, string>))]
+    [MessagePack.Key("data")]
+    public Dictionary<string, string> Data { get; set; } = new Dictionary<string, string>();
 }
 
 /// <summary>
-/// ToDo: With larger API, implement the Repository pattern with UoW, DbContext
+/// For case of larger APIs, implement also with Repository pattern with UoW, DbContext
 /// with ORM support such as EFCore, or NHibernate 
 /// </summary>
 public interface IDocumentStorage

@@ -14,7 +14,7 @@ public interface ISerializer
 
     void Serialize(DocumentEntity document, out Stream stream);
 
-    Task<byte[]> SerializeAsync(DocumentEntity document);
+    Task<string> SerializeAsync(DocumentEntity document);
 
     string ContentType { get; }
 }
@@ -27,7 +27,7 @@ public abstract class ASerializer : ISerializer
 
     public abstract void Serialize(DocumentEntity document, out Stream stream);
 
-    public abstract Task<byte[]> SerializeAsync(DocumentEntity document);
+    public abstract Task<string> SerializeAsync(DocumentEntity document);
 
     /// <summary>
     /// Factory method returns appropriate serializer instance based on expected format type.
@@ -69,12 +69,12 @@ public class XmlDocumentSerializer : ASerializer
         stream.Seek(0, SeekOrigin.Begin);
     }
 
-    override public async Task<byte[]> SerializeAsync(DocumentEntity document)
+    override public async Task<string> SerializeAsync(DocumentEntity document)
     {
         using var stream = new MemoryStream();
         _serializer.Serialize(stream, document);
         stream.Seek(0, SeekOrigin.Begin);
-        return await Task.FromResult(stream.ToArray());
+        return await Task.FromResult(Encoding.UTF8.GetString(stream.ToArray()));
     }
 
     XmlSerializer _serializer = new XmlSerializer(typeof(DocumentEntity));
@@ -98,13 +98,14 @@ public class MsgPackSerializer : ASerializer
         stream = new MemoryStream(bytes);
     }
 
-    override public async Task<byte[]> SerializeAsync(DocumentEntity document)
+    override public async Task<string> SerializeAsync(DocumentEntity document)
     {
         var options = MessagePackSerializerOptions.Standard;
         using var stream = new MemoryStream();
         await MessagePackSerializer.SerializeAsync(stream, document, options);
         stream.Seek(0, SeekOrigin.Begin);
-        return stream.ToArray();
+        using var reader = new StreamReader(stream);
+        return await reader.ReadToEndAsync();
     }
 }
 
@@ -124,10 +125,9 @@ public class JsonSerializer : ASerializer
         stream = new MemoryStream(bytes);
     }
 
-    override public async Task<byte[]> SerializeAsync(DocumentEntity document)
+    override public async Task<string> SerializeAsync(DocumentEntity document)
     {
         var json = Serialize(document);
-        var bytes = Encoding.UTF8.GetBytes(json);
-        return await Task.FromResult(bytes);
+        return await Task.FromResult(json);
     }
 }
