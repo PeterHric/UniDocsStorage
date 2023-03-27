@@ -49,17 +49,17 @@ public class Startup
         switch (storageType)
         {
             case "InMemory":
-                services.AddSingleton<IDocumentStorage, InMemoryDocumentStorage>();
+                services.AddScoped<IDocumentStorage, InMemoryDocumentStorage>();
                 break;
             case "HDD":
-                services.AddSingleton<IDocumentStorage>(sp =>
+                services.AddScoped<IDocumentStorage>(sp =>
                 {
                     var configuration = sp.GetService<IConfiguration>();
                     return new HddDocumentStorage(_configuration);
                 });
                 break;
             case "MsSql":
-                services.AddSingleton<IDocumentStorage>(sp =>
+                services.AddScoped<IDocumentStorage>(sp =>
                 {
                     var configuration = sp.GetService<IConfiguration>();
                     return new MssqlDocumentStorage(_configuration);
@@ -68,11 +68,11 @@ public class Startup
             case "Mongo":
                 var mongoClient = new MongoClient(_configuration["MongoConnectionString"]);
                 services.AddSingleton<IMongoClient>(mongoClient);
-                services.AddSingleton<IDocumentStorage, MongoDocumentStorage>();
+                services.AddScoped<IDocumentStorage, MongoDocumentStorage>();
                 break;
             case "EntityFramework":
                 services.AddDbContext<DocumentDbContext>(options => options.UseSqlServer(_configuration.GetConnectionString("DefaultConnection")));
-                services.AddTransient<EfDocumentRepository>();
+                services.AddScoped<EfDocumentRepository>();
                 break;
             default:
                 throw new Exception($"Invalid storage type: {storageType}");

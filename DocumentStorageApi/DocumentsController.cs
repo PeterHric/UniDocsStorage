@@ -60,6 +60,11 @@ public class DocumentsController : ControllerBase
             return BadRequest("Document contains no 'Data'");
         }
 
+        if (null == await _documentStorage.GetAsync(id))
+        {
+            return NotFound($"A document with id:{id} was NOT found.");
+        }
+
         try
         {
             await _documentStorage.UpdateAsync(document);
